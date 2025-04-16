@@ -1,30 +1,29 @@
-# Use official Python image
 FROM python:3.11-slim
 
-# Install OS-level dependencies for dlib, face_recognition, etc.
+# Install system dependencies needed for dlib and face_recognition
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
-    libopenblas-dev \
-    liblapack-dev \
-    libx11-dev \
-    libgtk-3-dev \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     libboost-all-dev \
-    python3-dev \
+    libatlas-base-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy application code
+COPY . /app
 WORKDIR /app
 
-# Copy files into the container
-COPY . .
+# Make sure Flask runs on 0.0.0.0 so it's accessible by Render
+ENV FLASK_RUN_HOST=0.0.0.0
+ENV FLASK_APP=app.py
 
-# Upgrade pip and install Python dependencies
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-
-# Expose Flask port
 EXPOSE 5000
 
-# Run your Flask app
-CMD ["python", "app.py"]
+CMD ["flask", "run", "--port=5000"]
